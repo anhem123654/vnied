@@ -1,0 +1,2471 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>VNeID</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --red: #d32f2f;
+        --dark-red: #b71c1c;
+        --gold: #f9a825;
+        --light-gold: #fdd835;
+        --bg-cream: #faf5ee;
+        --blue-dark: #1a237e;
+        --text-dark: #1a1a1a;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+          "Helvetica Neue", sans-serif;
+        background: #f0f1f5;
+        overscroll-behavior: none;
+      }
+      .device {
+        width: 100%;
+        max-width: 430px;
+        height: 100dvh;
+        position: relative;
+        overflow: hidden;
+        background: #fff;
+        margin: 0 auto;
+      }
+
+      .status-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding: 0 20px 6px;
+        z-index: 9999;
+        pointer-events: none;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .status-bar.dark {
+        color: #111;
+      }
+      .status-icons {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+      }
+
+      .screen {
+        position: absolute;
+        inset: 0;
+        transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+          opacity 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: transform;
+        overflow: hidden;
+      }
+      .screen {
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
+      }
+      .screen.active {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: all;
+      }
+      .screen.behind {
+        transform: translateX(-28%);
+        opacity: 0.7;
+        pointer-events: none;
+      }
+      .screen.slide-out-left {
+        transform: translateX(-100%);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #splash {
+        background: linear-gradient(170deg, #c62828 0%, #7b0000 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 24px 40px;
+      }
+      .splash-pattern {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-image: radial-gradient(
+            circle at 20% 20%,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px
+          ),
+          radial-gradient(
+            circle at 80% 80%,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px
+          );
+        background-size: 40px 40px;
+      }
+      .splash-logo-wrap {
+        position: relative;
+        z-index: 1;
+        margin-top: 30px;
+      }
+      .splash-logo {
+        width: 110px;
+        height: 110px;
+        filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.35));
+      }
+      .splash-title {
+        z-index: 1;
+        text-align: center;
+        margin-top: 20px;
+        color: #fff;
+      }
+      .splash-title h1 {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--light-gold);
+        letter-spacing: 1px;
+      }
+      .splash-title p {
+        font-size: 13px;
+        margin-top: 4px;
+        opacity: 0.85;
+      }
+      .splash-desc {
+        z-index: 1;
+        text-align: center;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.82);
+        line-height: 1.6;
+        margin-top: auto;
+        margin-bottom: 28px;
+        padding: 0 8px;
+      }
+      .btn-red {
+        width: 100%;
+        padding: 15px;
+        border-radius: 10px;
+        background: #e53935;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        z-index: 1;
+      }
+      .btn-outline {
+        width: 100%;
+        padding: 14px;
+        border-radius: 10px;
+        background: transparent;
+        color: #fff;
+        border: 1.5px solid rgba(255, 255, 255, 0.45);
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 1;
+        margin-top: 12px;
+      }
+      .splash-links {
+        z-index: 1;
+        text-align: center;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
+        margin-top: 16px;
+      }
+      .splash-links a {
+        color: var(--light-gold);
+        font-weight: 700;
+      }
+      .splash-hotline {
+        color: var(--light-gold);
+        font-weight: 700;
+      }
+      .splash-footer-row {
+        z-index: 1;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 20px;
+      }
+
+      #setup {
+        background: #f5f5f7;
+        display: flex;
+        flex-direction: column;
+      }
+      .setup-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 20px;
+      }
+      .setup-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .setup-header {
+        background: linear-gradient(135deg, #c62828 0%, #9e1b1b 100%);
+        padding: 56px 20px 18px;
+      }
+      .setup-header-back {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 18px;
+        cursor: pointer;
+        margin-bottom: 8px;
+        display: block;
+      }
+      .setup-header-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: #fff;
+      }
+      .setup-header-sub {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.75);
+        margin-top: 2px;
+      }
+      .setup-section {
+        background: #fff;
+        margin: 12px 16px 0;
+        border-radius: 14px;
+        padding: 0 16px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      }
+      .setup-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 0 6px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      .setup-row {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f5f5f5;
+        gap: 10px;
+      }
+      .setup-row:last-child {
+        border-bottom: none;
+      }
+      .setup-label {
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+        min-width: 115px;
+        flex-shrink: 0;
+      }
+      .setup-label .req {
+        color: var(--red);
+      }
+      .setup-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        color: #111;
+        font-weight: 500;
+        background: transparent;
+        text-align: right;
+        font-family: inherit;
+      }
+      .setup-input::placeholder {
+        color: #bbb;
+        font-weight: 400;
+      }
+      .setup-select {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        color: #111;
+        font-weight: 500;
+        background: transparent;
+        text-align: right;
+        font-family: inherit;
+        -webkit-appearance: none;
+        cursor: pointer;
+      }
+      .photo-upload-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 16px 0;
+        gap: 10px;
+      }
+      .photo-preview {
+        width: 80px;
+        height: 100px;
+        border-radius: 6px;
+        background: #e8e8e8;
+        overflow: hidden;
+        border: 2px dashed #ccc;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+      }
+      .photo-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .photo-placeholder i {
+        font-size: 26px;
+        color: #ccc;
+      }
+      .photo-placeholder span {
+        font-size: 10px;
+        color: #aaa;
+        text-align: center;
+      }
+      .photo-upload-btn {
+        background: var(--red);
+        color: #fff;
+        border: none;
+        padding: 9px 22px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      #photoFileInput {
+        display: none;
+      }
+      .setup-save-btn {
+        margin: 14px 16px 0;
+        width: calc(100% - 32px);
+        padding: 15px;
+        background: var(--red);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+        box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+      }
+
+      #login {
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+      }
+      .login-bg-pattern {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 200px;
+        background: var(--bg-cream);
+        overflow: hidden;
+      }
+      .login-bg-pattern::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23c62828' fill-opacity='0.06'%3E%3Cpath d='M60 0 L80 30 L110 30 L88 50 L95 80 L60 65 L25 80 L32 50 L10 30 L40 30Z'/%3E%3C/g%3E%3C/svg%3E");
+        background-size: 80px 80px;
+      }
+      .login-bg-pattern::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, #fff);
+      }
+      .login-header {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 54px 20px 0;
+      }
+      .btn-back-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        color: #333;
+      }
+      .lang-selector {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        color: #333;
+        font-weight: 600;
+      }
+      .flag-circle {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--red);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .flag-star {
+        color: var(--light-gold);
+        font-size: 14px;
+      }
+      .login-body {
+        position: relative;
+        z-index: 2;
+        padding: 22px 20px 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .login-title {
+        font-size: 21px;
+        font-weight: 800;
+        color: var(--text-dark);
+        line-height: 1.3;
+        margin-bottom: 20px;
+      }
+      .user-card-field {
+        border: 1.5px solid var(--gold);
+        border-radius: 10px;
+        padding: 13px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fff;
+        margin-bottom: 6px;
+        cursor: pointer;
+      }
+      .user-card-name {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--text-dark);
+      }
+      .user-card-id {
+        font-size: 14px;
+        color: #555;
+        margin-top: 2px;
+      }
+      .vneid-badge {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #1b5e20;
+        border: 2.5px solid var(--light-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      .edit-hint {
+        font-size: 11px;
+        color: #bbb;
+        text-align: center;
+        margin-bottom: 14px;
+      }
+      .pwd-label {
+        font-size: 14px;
+        color: var(--text-dark);
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      .input-wrap {
+        border: 1.5px solid #e0e0e0;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        margin-bottom: 16px;
+        transition: border-color 0.2s;
+      }
+      .input-wrap:focus-within {
+        border-color: var(--red);
+      }
+      .input-icon {
+        padding: 0 12px;
+        color: #aaa;
+        font-size: 16px;
+      }
+      .input-wrap input {
+        flex: 1;
+        padding: 14px 0;
+        border: none;
+        outline: none;
+        font-size: 15px;
+        color: var(--text-dark);
+        background: transparent;
+      }
+      .input-wrap input::placeholder {
+        color: #bbb;
+      }
+      .eye-btn {
+        padding: 0 14px;
+        color: #aaa;
+        font-size: 16px;
+        cursor: pointer;
+        background: none;
+        border: none;
+      }
+      .btn-login-main {
+        width: 100%;
+        padding: 15px;
+        border-radius: 10px;
+        background: var(--red);
+        color: #fff;
+        border: none;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(211, 47, 47, 0.35);
+      }
+      .login-action-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+      }
+      .link-red {
+        color: var(--red);
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .link-dark {
+        color: var(--text-dark);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .login-support {
+        display: flex;
+        justify-content: space-around;
+        margin-top: auto;
+        padding: 16px 0 24px;
+      }
+      .support-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .support-icon-wrap {
+        width: 50px;
+        height: 50px;
+      }
+      .support-item span {
+        font-size: 11px;
+        color: #444;
+        text-align: center;
+        line-height: 1.3;
+      }
+      .login-footer {
+        text-align: center;
+        padding-bottom: 18px;
+      }
+      .login-footer a {
+        font-size: 13px;
+        color: #555;
+        text-decoration: underline;
+      }
+      .login-footer p {
+        font-size: 12px;
+        color: #aaa;
+        margin-top: 4px;
+      }
+
+      #home {
+        background: #f0f1f5;
+        display: flex;
+        flex-direction: column;
+      }
+      .home-scroll {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-bottom: 80px;
+      }
+      .home-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .home-header {
+        background: linear-gradient(170deg, #c62828 0%, #9e1b1b 100%);
+        padding: 52px 16px 20px;
+        position: relative;
+        overflow: hidden;
+        border-radius: 0 0 18px 18px;
+      }
+      .home-header-pattern {
+        position: absolute;
+        inset: 0;
+        opacity: 0.08;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff'%3E%3Cpath d='M30 0 L37 21 L60 21 L42 34 L49 55 L30 42 L11 55 L18 34 L0 21 L23 21Z'/%3E%3C/g%3E%3C/svg%3E");
+        background-size: 50px 50px;
+      }
+      .home-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: relative;
+        z-index: 1;
+      }
+      .home-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2.5px solid #fff;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+      }
+      .home-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .home-center {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+      }
+      .level-pill {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 4px 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 6px;
+      }
+      .level-pill .shield {
+        color: var(--red);
+        font-size: 13px;
+      }
+      .home-name {
+        font-size: 19px;
+        font-weight: 800;
+        color: #fff;
+      }
+      .search-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 16px;
+        position: relative;
+        z-index: 1;
+      }
+      .qr-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+        position: relative;
+        z-index: 1;
+      }
+      .qr-card {
+        flex: 1;
+        background: linear-gradient(135deg, #fdf3d0 0%, #f0c44a 100%);
+        border-radius: 12px;
+        padding: 11px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      }
+      .qr-img-cccd {
+        width: 44px;
+        height: 28px;
+        border-radius: 4px;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .cccd-mini {
+        width: 100%;
+        height: 100%;
+        padding: 2px 3px;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .cccd-mini-top {
+        font-size: 3.5px;
+        color: var(--blue-dark);
+        font-weight: 800;
+        text-align: center;
+      }
+      .cccd-mini-line {
+        height: 1px;
+        background: #ddd;
+      }
+      .cccd-mini-row {
+        display: flex;
+        gap: 2px;
+      }
+      .cccd-mini-photo {
+        width: 8px;
+        height: 10px;
+        background: #ccc;
+        border-radius: 1px;
+      }
+      .cccd-mini-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .cccd-mini-text span {
+        display: block;
+        height: 1.5px;
+        background: #aaa;
+        border-radius: 1px;
+      }
+      .qr-img-star {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #1b5e20;
+        border: 2px solid var(--light-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .qr-label {
+        font-size: 13px;
+        font-weight: 700;
+        color: #333;
+      }
+      .qr-sub {
+        font-size: 11px;
+        color: #666;
+        margin-top: 1px;
+      }
+      .home-section {
+        padding: 16px 16px 0;
+      }
+      .section-label {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin-bottom: 12px;
+      }
+      .services-scroll {
+        display: flex;
+        gap: 14px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+      .services-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .svc-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        min-width: 64px;
+        position: relative;
+      }
+      .svc-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: var(--red);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 21px;
+        box-shadow: 0 3px 8px rgba(211, 47, 47, 0.3);
+      }
+      .svc-text {
+        font-size: 11px;
+        color: #555;
+        text-align: center;
+        line-height: 1.3;
+      }
+      .badge-new {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: var(--red);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 5px;
+        border-radius: 8px;
+        border: 1.5px solid #fff;
+      }
+      .org-banner {
+        background: var(--red);
+        border-radius: 12px;
+        padding: 13px 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 12px;
+        box-shadow: 0 3px 10px rgba(211, 47, 47, 0.25);
+      }
+      .org-icon-wrap {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .org-text {
+        flex: 1;
+      }
+      .org-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: #fff;
+      }
+      .org-sub {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 2px;
+      }
+      .org-switch-btn {
+        width: 30px;
+        height: 30px;
+        background: #fff;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--red);
+        font-size: 13px;
+      }
+      .portal-banner {
+        background: linear-gradient(135deg, #fffde7 0%, #fff8e1 100%);
+        border: 1px solid #ffe082;
+        border-radius: 12px;
+        padding: 14px;
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 7px;
+        text-align: center;
+      }
+      .portal-emblem {
+        width: 46px;
+        height: 46px;
+      }
+      .portal-title {
+        font-size: 14px;
+        font-weight: 900;
+        color: #111;
+      }
+      .portal-title span {
+        color: var(--red);
+      }
+      .portal-urls {
+        font-size: 10px;
+        color: #777;
+      }
+      .portal-btn {
+        font-size: 11px;
+        color: var(--red);
+        border: 1px solid var(--red);
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .favorites-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .edit-link {
+        font-size: 13px;
+        color: var(--red);
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .fav-grid {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 12px;
+        padding-bottom: 8px;
+      }
+      .fav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        width: 86px;
+        cursor: pointer;
+      }
+      .fav-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid #eee;
+        overflow: hidden;
+      }
+      .fav-text {
+        font-size: 11px;
+        color: #444;
+        text-align: center;
+        line-height: 1.3;
+      }
+
+      .bottom-nav {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 8px));
+        z-index: 100;
+      }
+      .nav-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        cursor: pointer;
+        color: #999;
+        font-size: 11px;
+        border: none;
+        background: none;
+        padding: 2px 8px;
+      }
+      .nav-btn.active {
+        color: var(--red);
+      }
+      .nav-btn i {
+        font-size: 22px;
+      }
+      .nav-scan-btn {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: var(--red);
+        color: #fff;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: -18px;
+        border: 3px solid #fff;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+      }
+
+      #wallet {
+        background: var(--bg-cream);
+      }
+      .wallet-scroll {
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-bottom: 90px;
+      }
+      .wallet-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .wallet-top-area {
+        background: var(--bg-cream);
+        padding: 54px 16px 12px;
+        position: relative;
+      }
+      .wallet-bg-pattern {
+        position: absolute;
+        inset: 0;
+        opacity: 1;
+        background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c8a96e' stroke-opacity='0.12' stroke-width='0.8'%3E%3Ccircle cx='40' cy='40' r='30'/%3E%3Ccircle cx='40' cy='40' r='20'/%3E%3Cpath d='M40 10 L47 32 L70 32 L53 46 L60 68 L40 55 L20 68 L27 46 L10 32 L33 32Z'/%3E%3C/g%3E%3C/svg%3E");
+        background-size: 80px 80px;
+        pointer-events: none;
+      }
+      .wallet-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 1;
+      }
+      .cccd-canvas-wrap {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+      }
+      .cccd-canvas-wrap canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .detail-btn-wrap {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+        z-index: 10;
+      }
+      .detail-btn {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 30px;
+        padding: 10px 26px;
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: calc(20px + env(safe-area-inset-bottom));
+      }
+      .wallet-bottom {
+        background: #fff;
+        padding: 22px 16px 18px;
+      }
+      .acc-level-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .acc-level-text {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--red);
+      }
+      .acc-desc-text {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 20px;
+      }
+      .w-section-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: #222;
+        margin-bottom: 12px;
+      }
+      .action-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .action-box {
+        flex: 1;
+        background: #f4f5f7;
+        border-radius: 14px;
+        padding: 18px 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+      .action-label {
+        font-size: 14px;
+        color: #444;
+        font-weight: 500;
+        text-align: center;
+      }
+      .alert-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 22px;
+      }
+      .alert-dot {
+        width: 16px;
+        height: 16px;
+        background: var(--red);
+        border-radius: 4px;
+        flex-shrink: 0;
+        margin-top: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .alert-dot::after {
+        content: "";
+        width: 4px;
+        height: 4px;
+        background: #fff;
+        border-radius: 1px;
+      }
+      .alert-msg {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--red);
+        line-height: 1.4;
+      }
+      .docs-grid {
+        display: flex;
+        justify-content: space-around;
+        padding: 6px 0 2px;
+      }
+      .doc-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .doc-circle {
+        width: 66px;
+        height: 66px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .doc-circle::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: var(--red);
+      }
+      .doc-circle-inner {
+        position: relative;
+        z-index: 1;
+        margin-bottom: 14px;
+      }
+      .doc-label {
+        font-size: 12px;
+        color: #444;
+        text-align: center;
+        line-height: 1.3;
+      }
+      .doc-cccd {
+        width: 34px;
+        height: 22px;
+        background: #fff;
+        border: 2px solid var(--gold);
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        padding: 0 3px;
+        gap: 3px;
+      }
+      .doc-cccd::before {
+        content: "";
+        width: 7px;
+        height: 9px;
+        background: var(--red);
+        border-radius: 2px;
+      }
+      .doc-cccd::after {
+        content: "";
+        flex: 1;
+        height: 2px;
+        background: #bbb;
+        box-shadow: 0 3px 0 #bbb, 0 6px 0 #bbb;
+      }
+      .doc-vn30 {
+        background: #fff;
+        border: 1.5px solid var(--red);
+        color: var(--red);
+        font-size: 10px;
+        font-weight: 900;
+        padding: 3px 5px;
+        border-radius: 4px;
+      }
+      .doc-bhyt {
+        position: relative;
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .doc-bhyt::before {
+        content: "\f3ed";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        font-size: 34px;
+        color: var(--gold);
+      }
+      .doc-bhyt::after {
+        content: "\2b";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        position: absolute;
+        color: var(--red);
+        font-size: 16px;
+      }
+
+      #detail {
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+      }
+      .detail-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 52px 20px 14px;
+        background: #fff;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      .back-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: #555;
+        cursor: pointer;
+        padding: 4px 8px 4px 0;
+      }
+      .detail-header-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #111;
+      }
+      .detail-scroll {
+        flex: 1;
+        overflow-y: auto;
+        position: relative;
+        padding-bottom: 40px;
+      }
+      .detail-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .detail-bg-pattern {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23164f73' fill-opacity='0.025'%3E%3Cpath d='M50 10 L57 32 L80 32 L63 47 L70 68 L50 55 L30 68 L37 47 L20 32 L43 32Z'/%3E%3C/g%3E%3C/svg%3E");
+        background-size: 80px 80px;
+      }
+      .detail-inner {
+        padding: 14px 16px;
+        position: relative;
+        z-index: 1;
+      }
+      .detail-canvas-wrap {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        margin-bottom: 18px;
+      }
+      .detail-canvas-wrap canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .info-section {
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+      }
+      .info-entry {
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .info-key {
+        color: var(--blue-dark);
+        font-weight: 700;
+      }
+      .info-val {
+        color: #222;
+        font-weight: 500;
+      }
+      .info-row-split {
+        display: flex;
+        gap: 10px;
+      }
+      .info-row-split > div {
+        flex: 1;
+      }
+      .update-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: #999;
+        border-top: 1px solid #f0f0f0;
+        padding-top: 13px;
+        margin-top: 6px;
+      }
+      .update-row .val {
+        color: #444;
+        font-weight: 600;
+      }
+      .links-section {
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+        margin-top: 15px;
+      }
+      .link-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+      }
+      .link-icon {
+        color: var(--red);
+        font-size: 22px;
+      }
+      .link-text {
+        font-size: 15px;
+        font-weight: 700;
+        color: #111;
+      }
+
+      .modal-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 200;
+        background: rgba(0, 0, 0, 0.55);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        overflow: hidden;
+      }
+      .modal-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .passcode-sheet {
+        background: #fff;
+        border-radius: 18px 18px 0 0;
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      .modal-overlay.open .passcode-sheet {
+        transform: translateY(0);
+      }
+      .sheet-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      .sheet-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #111;
+      }
+      .sheet-close {
+        font-size: 20px;
+        color: #777;
+        cursor: pointer;
+        padding: 4px;
+        background: none;
+        border: none;
+      }
+      .dots-row {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        padding: 22px 0 0;
+      }
+      .dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 1.5px solid #ccc;
+        background: #f0f0f0;
+        transition: all 0.15s;
+      }
+      .dot.on {
+        background: #333;
+        border-color: #333;
+      }
+      .forgot-link {
+        text-align: center;
+        font-size: 13px;
+        color: #555;
+        padding: 12px 0 16px;
+        cursor: pointer;
+      }
+      .keypad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 0 14px 14px;
+        background: #f0f2f5;
+      }
+      .key {
+        background: #fff;
+        border-radius: 10px;
+        padding: 12px 0;
+        text-align: center;
+        font-size: 22px;
+        font-weight: 600;
+        color: #222;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+        cursor: pointer;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      .key:active {
+        background: #e0e0e0;
+      }
+      .key.empty {
+        background: transparent;
+        box-shadow: none;
+        cursor: default;
+      }
+      .key.empty:active {
+        background: transparent;
+      }
+      .key.del {
+        background: transparent;
+        box-shadow: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #444;
+        font-size: 22px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="device">
+      <div class="status-bar" id="statusBar">
+        <span id="clock">00:00</span>
+        <div class="status-icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <span id="bat">100%</span>
+          <i class="fa-solid fa-battery-full" id="batIcon"></i>
+        </div>
+      </div>
+
+      <div class="screen active" id="splash">
+        <div class="splash-pattern"></div>
+        <div class="splash-logo-wrap">
+          <svg
+            class="splash-logo"
+            viewBox="0 0 100 100"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <polygon
+              points="50,4 62,38 97,38 69,58 80,93 50,73 20,93 31,58 3,38 38,38"
+              fill="#fdd835"
+              filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
+            />
+            <circle
+              cx="50"
+              cy="56"
+              r="18"
+              fill="#b71c1c"
+              stroke="#fdd835"
+              stroke-width="2.5"
+            />
+            <text
+              x="50"
+              y="54"
+              font-size="7"
+              fill="#fdd835"
+              font-weight="800"
+              text-anchor="middle"
+              font-family="system-ui"
+            >
+              VNeID
+            </text>
+            <text
+              x="50"
+              y="63"
+              font-size="5.5"
+              fill="rgba(255,255,255,0.8)"
+              text-anchor="middle"
+              font-family="system-ui"
+            >
+              BỘ CÔNG AN
+            </text>
+          </svg>
+        </div>
+        <div class="splash-title">
+          <h1>BỘ CÔNG AN</h1>
+          <p>Trung tâm dữ liệu Quốc gia về dân cư</p>
+        </div>
+        <p class="splash-desc">
+          Ứng dụng định danh điện tử có giá trị sử dụng thay thế các giấy tờ
+          truyền thống, định danh công dân trên môi trường kỹ thuật số
+        </p>
+        <button class="btn-red" onclick="go('splash','login')">
+          Đăng nhập
+        </button>
+        <button class="btn-outline">
+          Kích hoạt tài khoản định danh điện tử
+        </button>
+        <div class="splash-links" style="margin-top: 14px">
+          <p>Bạn chưa có tài khoản? <a href="#">Đăng ký</a></p>
+          <p style="margin-top: 6px">
+            Hotline: <span class="splash-hotline">1900.0368</span>
+          </p>
+        </div>
+        <div class="splash-footer-row">
+          <span>Chính sách quyền riêng tư</span><span>Phiên bản 2.0.8</span>
+        </div>
+      </div>
+
+      <div class="screen" id="setup">
+        <div class="setup-scroll">
+          <div class="setup-header">
+            <button class="setup-header-back" onclick="go('setup','login')">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="setup-header-title">Nhập thông tin cá nhân</div>
+            <div class="setup-header-sub">
+              Thông tin hiển thị trên thẻ Căn cước điện tử
+            </div>
+          </div>
+
+          <div class="setup-section">
+            <div class="setup-section-title">Ảnh chân dung</div>
+            <div class="photo-upload-area">
+              <div
+                class="photo-preview"
+                onclick="document.getElementById('photoFileInput').click()"
+              >
+                <div class="photo-placeholder" id="photoPlaceholder">
+                  <i class="fa-regular fa-user"></i><span>Chạm để<br />chọn ảnh</span>
+                </div>
+                <img id="photoPreviewImg" alt="" />
+              </div>
+              <input
+                type="file"
+                id="photoFileInput"
+                accept="image/*"
+                onchange="handlePhotoUpload(this)"
+              />
+              <button
+                class="photo-upload-btn"
+                onclick="document.getElementById('photoFileInput').click()"
+              >
+                <i class="fa-solid fa-camera" style="margin-right: 6px"></i>Chọn ảnh
+              </button>
+            </div>
+          </div>
+
+          <div class="setup-section">
+            <div class="setup-section-title">Thông tin cơ bản</div>
+            <div class="setup-row">
+              <div class="setup-label">Số CCCD <span class="req">*</span></div>
+              <input class="setup-input" id="inp-soCCCD" type="tel" placeholder="12 chữ số" maxlength="12" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Họ và tên <span class="req">*</span></div>
+              <input class="setup-input" id="inp-hoTen" type="text" placeholder="NGUYỄN VĂN A" oninput="this.value=this.value.toUpperCase()" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Ngày sinh <span class="req">*</span></div>
+              <input class="setup-input" id="inp-ngaySinh" type="date" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Giới tính <span class="req">*</span></div>
+              <select class="setup-select" id="inp-gioiTinh">
+                <option value="">Chọn</option>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+              </select>
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Quốc tịch</div>
+              <input class="setup-input" id="inp-quocTich" type="text" placeholder="Việt Nam" value="Việt Nam" />
+            </div>
+          </div>
+
+          <div class="setup-section">
+            <div class="setup-section-title">Địa chỉ & gốc gác</div>
+            <div class="setup-row">
+              <div class="setup-label">Quê quán</div>
+              <input class="setup-input" id="inp-queQuan" type="text" placeholder="Xã/Phường, Tỉnh/TP" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Nơi thường trú</div>
+              <input class="setup-input" id="inp-thuongTru" type="text" placeholder="Địa chỉ thường trú" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Nơi tạm trú</div>
+              <input class="setup-input" id="inp-tamTru" type="text" placeholder="Nếu có" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Nơi ở hiện tại</div>
+              <input class="setup-input" id="inp-noiOHienTai" type="text" placeholder="Địa chỉ hiện tại" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Nơi sinh</div>
+              <input class="setup-input" id="inp-noiSinh" type="text" placeholder="Nơi sinh" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Nơi ĐKKS</div>
+              <input class="setup-input" id="inp-noiDKKS" type="text" placeholder="Nơi đăng ký khai sinh" />
+            </div>
+          </div>
+
+          <div class="setup-section">
+            <div class="setup-section-title">Thông tin bổ sung</div>
+            <div class="setup-row">
+              <div class="setup-label">Dân tộc</div>
+              <input class="setup-input" id="inp-danToc" type="text" placeholder="Kinh" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Tôn giáo</div>
+              <input class="setup-input" id="inp-tonGiao" type="text" placeholder="Không" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Đặc điểm NX</div>
+              <input class="setup-input" id="inp-dacDiem" type="text" placeholder="Đặc điểm nhận dạng" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Ngày cấp CC</div>
+              <input class="setup-input" id="inp-ngayCap" type="date" />
+            </div>
+            <div class="setup-row">
+              <div class="setup-label">Có giá trị đến</div>
+              <input class="setup-input" id="inp-giaTri" type="date" />
+            </div>
+          </div>
+
+          <button class="setup-save-btn" onclick="saveInfo()">
+            <i class="fa-solid fa-check" style="margin-right: 8px"></i>Lưu thông tin
+          </button>
+          <div style="height: 24px"></div>
+        </div>
+      </div>
+
+      <div class="screen" id="login">
+        <div class="login-bg-pattern"></div>
+        <div class="login-header">
+          <button class="btn-back-icon" onclick="go('login','splash')">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <div class="lang-selector">
+            <div class="flag-circle"><span class="flag-star">★</span></div>
+            <i class="fa-solid fa-chevron-down" style="font-size: 11px; color: #555"></i>
+          </div>
+        </div>
+        <div class="login-body">
+          <h2 class="login-title">
+            Vui lòng nhập thông tin đăng nhập để tiếp tục
+          </h2>
+          <div class="user-card-field" onclick="go('login','setup')">
+            <div>
+              <div class="user-card-name" id="loginCardName">NGUYỄN VĂN MẪN</div>
+              <div class="user-card-id" id="loginCardId">04********39</div>
+            </div>
+            <div class="vneid-badge">
+              <svg width="26" height="26" viewBox="0 0 100 100">
+                <polygon points="50,4 62,38 97,38 69,58 80,93 50,73 20,93 31,58 3,38 38,38" fill="#fdd835" />
+                <circle cx="50" cy="56" r="14" fill="#1b5e20" stroke="#fdd835" stroke-width="2" />
+                <text x="50" y="60" font-size="9" fill="#fdd835" font-weight="800" text-anchor="middle" font-family="system-ui">VN</text>
+              </svg>
+            </div>
+          </div>
+          <div class="edit-hint">Nhấn để chỉnh sửa thông tin</div>
+          <div class="pwd-label">Mật khẩu</div>
+          <div class="input-wrap">
+            <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" id="pwdInput" placeholder="Nhập mật khẩu" />
+            <button class="eye-btn" onclick="togglePwd()">
+              <i class="fa-regular fa-eye-slash" id="eyeIcon"></i>
+            </button>
+          </div>
+          <button class="btn-login-main" onclick="go('login','home')">Đăng nhập</button>
+          <div class="login-action-row">
+            <span class="link-red">Quên mật khẩu</span>
+            <span class="link-dark">Đổi tài khoản <i class="fa-solid fa-rotate" style="font-size: 13px; color: var(--red)"></i></span>
+          </div>
+          <div class="login-support">
+            <div class="support-item">
+              <div class="support-icon-wrap">
+                <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="8" y="12" width="44" height="36" rx="3" fill="none" stroke="#d32f2f" stroke-width="2.5" />
+                  <rect x="14" y="18" width="12" height="10" rx="1" fill="#f5e6c8" />
+                  <line x1="30" y1="20" x2="46" y2="20" stroke="#ccc" stroke-width="2" />
+                  <line x1="30" y1="25" x2="46" y2="25" stroke="#ccc" stroke-width="2" />
+                  <line x1="14" y1="32" x2="46" y2="32" stroke="#ddd" stroke-width="1.5" />
+                  <line x1="14" y1="37" x2="38" y2="37" stroke="#ddd" stroke-width="1.5" />
+                  <circle cx="40" cy="42" r="8" fill="#d32f2f" />
+                  <text x="40" y="46" font-size="8" fill="#fff" font-weight="900" text-anchor="middle" font-family="system-ui">i</text>
+                </svg>
+              </div>
+              <span>Hướng dẫn<br />sử dụng</span>
+            </div>
+            <div class="support-item">
+              <div class="support-icon-wrap">
+                <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="8" y="8" width="44" height="36" rx="8" fill="none" stroke="#d32f2f" stroke-width="2.5" />
+                  <text x="30" y="32" font-size="16" fill="#d32f2f" font-weight="900" text-anchor="middle" font-family="system-ui">?</text>
+                  <path d="M22 44 L30 52 L38 44" fill="#d32f2f" />
+                </svg>
+              </div>
+              <span>Câu hỏi<br />thường gặp</span>
+            </div>
+            <div class="support-item">
+              <div class="support-icon-wrap">
+                <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 12 Q14 12 14 18 L14 36 Q14 42 20 42 L24 42 L24 50 L34 42 L40 42 Q46 42 46 36 L46 18 Q46 12 40 12 Z" fill="none" stroke="#d32f2f" stroke-width="2.5" />
+                  <circle cx="38" cy="14" r="9" fill="#d32f2f" />
+                  <path d="M33 14 Q36 10 40 11 Q44 13 42 17 Q40 19 38 20" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" />
+                  <circle cx="38" cy="23" r="1.5" fill="#fff" />
+                </svg>
+              </div>
+              <span>Hotline<br />hỗ trợ</span>
+            </div>
+          </div>
+          <div class="login-footer">
+            <a href="#">Chính sách quyền riêng tư</a>
+            <p>Phiên bản 2.2.7</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="home">
+        <div class="home-scroll">
+          <div class="home-header">
+            <div class="home-header-pattern"></div>
+            <div class="home-top-row">
+              <div class="home-avatar" onclick="go('home','setup')">
+                <img id="homeAvatar" src="https://i.pravatar.cc/100?img=11" alt="Avatar" />
+              </div>
+              <div class="home-center">
+                <div class="level-pill">
+                  Định danh mức 2
+                  <i class="fa-solid fa-shield-halved shield"></i>
+                </div>
+                <div class="home-name" id="homeName">NGUYỄN VĂN MẪN</div>
+              </div>
+              <button class="search-circle">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+            </div>
+            <div class="qr-row">
+              <div class="qr-card">
+                <div class="qr-img-cccd">
+                  <div class="cccd-mini">
+                    <div class="cccd-mini-top">CCCD</div>
+                    <div class="cccd-mini-line"></div>
+                    <div class="cccd-mini-row">
+                      <div class="cccd-mini-photo"></div>
+                      <div class="cccd-mini-text">
+                        <span></span><span style="width: 70%"></span><span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="qr-label">Mã QR</div>
+                  <div class="qr-sub">Thẻ CCCD</div>
+                </div>
+              </div>
+              <div class="qr-card">
+                <div class="qr-img-star">
+                  <svg width="20" height="20" viewBox="0 0 100 100">
+                    <polygon points="50,4 62,38 97,38 69,58 80,93 50,73 20,93 31,58 3,38 38,38" fill="#fdd835" />
+                    <circle cx="50" cy="56" r="16" fill="#1b5e20" stroke="#fdd835" stroke-width="2" />
+                    <text x="50" y="60" font-size="11" fill="#fdd835" font-weight="800" text-anchor="middle" font-family="system-ui">VN</text>
+                  </svg>
+                </div>
+                <div>
+                  <div class="qr-label">Mã QR</div>
+                  <div class="qr-sub">Định danh điện tử</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="home-section">
+            <div class="section-label">Nhóm dịch vụ</div>
+            <div class="services-scroll">
+              <div class="svc-item">
+                <div class="badge-new">Mới</div>
+                <div class="svc-icon"><i class="fa-solid fa-building-columns"></i></div>
+                <div class="svc-text">Thủ tục<br />hành chính</div>
+              </div>
+              <div class="svc-item">
+                <div class="badge-new">Mới</div>
+                <div class="svc-icon"><i class="fa-solid fa-seedling"></i></div>
+                <div class="svc-text">An sinh xã<br />hội</div>
+              </div>
+              <div class="svc-item">
+                <div class="badge-new">Mới</div>
+                <div class="svc-icon" style="font-size: 18px"><i class="fa-solid fa-shield-virus"></i></div>
+                <div class="svc-text">Hồ sơ sức<br />khỏe</div>
+              </div>
+              <div class="svc-item">
+                <div class="badge-new">Mới</div>
+                <div class="svc-icon"><i class="fa-regular fa-star"></i></div>
+                <div class="svc-text">Dịch vụ khác</div>
+              </div>
+              <div class="svc-item">
+                <div class="badge-new">Mới</div>
+                <div class="svc-icon" style="font-size: 15px"><i class="fa-solid fa-person-walking-arrow-right"></i></div>
+                <div class="svc-text">Định danh<br />người dưới 14</div>
+              </div>
+            </div>
+          </div>
+          <div class="home-section">
+            <div class="org-banner">
+              <div class="org-icon-wrap">
+                <svg width="28" height="28" viewBox="0 0 100 100">
+                  <rect x="20" y="30" width="60" height="50" rx="4" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.5)" stroke-width="3" />
+                  <rect x="35" y="50" width="12" height="12" rx="2" fill="rgba(255,255,255,0.5)" />
+                  <rect x="53" y="50" width="12" height="12" rx="2" fill="rgba(255,255,255,0.5)" />
+                  <rect x="40" y="62" width="20" height="18" rx="2" fill="rgba(255,255,255,0.3)" />
+                  <path d="M50 10 L65 30 L35 30Z" fill="rgba(255,200,0,0.8)" />
+                </svg>
+              </div>
+              <div class="org-text">
+                <div class="org-title">Định danh tổ chức</div>
+                <div class="org-sub">(Nhấn để đổi vai trò sang tổ chức)</div>
+              </div>
+              <div class="org-switch-btn">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+              </div>
+            </div>
+            <div class="portal-banner">
+              <svg class="portal-emblem" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#c8a050" stroke-width="3" />
+                <polygon points="50,12 57,34 80,34 62,47 69,69 50,56 31,69 38,47 20,34 43,34" fill="#c8a050" />
+                <circle cx="50" cy="50" r="14" fill="#c62828" stroke="#c8a050" stroke-width="2" />
+                <text x="50" y="53" font-size="8" fill="#fdd835" font-weight="800" text-anchor="middle" font-family="system-ui">BCA</text>
+              </svg>
+              <div class="portal-title">
+                CỔNG THÔNG TIN ĐIỆN TỬ<br /><span>BỘ CÔNG AN</span>
+              </div>
+              <div class="portal-urls">https://bocongan.gov.vn/</div>
+              <div class="portal-btn">NHẤN VÀO ĐÂY ĐỂ TRUY CẬP CỔNG THÔNG TIN >></div>
+            </div>
+          </div>
+          <div class="home-section" style="padding-bottom: 16px">
+            <div class="favorites-header">
+              <div class="section-label" style="margin-bottom: 0">Tiện ích yêu thích</div>
+              <div class="edit-link">Chỉnh sửa <i class="fa-solid fa-pen" style="font-size: 11px"></i></div>
+            </div>
+            <div class="fav-grid">
+              <div class="fav-item" onclick="switchTab('wallet')">
+                <div class="fav-icon">
+                  <svg width="50" height="36" viewBox="0 0 52 38">
+                    <rect x="2" y="2" width="48" height="34" rx="4" fill="#fff" stroke="#e0b04a" stroke-width="2" />
+                    <rect x="6" y="6" width="16" height="20" rx="2" fill="#ccc" />
+                    <line x1="28" y1="10" x2="46" y2="10" stroke="#ddd" stroke-width="2" />
+                    <line x1="28" y1="15" x2="40" y2="15" stroke="#ddd" stroke-width="2" />
+                    <circle cx="14" cy="16" r="6" fill="#f5c200" opacity="0.8" />
+                  </svg>
+                </div>
+                <div class="fav-text">Thẻ Căn cước/<br />CCCD</div>
+              </div>
+              <div class="fav-item">
+                <div class="fav-icon">
+                  <i class="fa-solid fa-car" style="font-size: 28px; color: #e0b04a"></i>
+                </div>
+                <div class="fav-text">Giấy phép lái xe</div>
+              </div>
+              <div class="fav-item">
+                <div class="fav-icon">
+                  <i class="fa-solid fa-shield-heart" style="font-size: 28px; color: #d32f2f"></i>
+                </div>
+                <div class="fav-text">Thẻ BHYT</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <nav class="bottom-nav">
+          <button class="nav-btn active" onclick="switchTab('home')">
+            <i class="fa-solid fa-house"></i><span>Trang chủ</span>
+          </button>
+          <button class="nav-btn" onclick="switchTab('wallet')">
+            <i class="fa-solid fa-wallet"></i><span>Ví giấy tờ</span>
+          </button>
+          <div class="nav-scan-btn"><i class="fa-solid fa-qrcode"></i></div>
+          <button class="nav-btn">
+            <i class="fa-regular fa-bell"></i><span>Thông báo</span>
+          </button>
+          <button class="nav-btn">
+            <i class="fa-solid fa-gear"></i><span>Cài đặt</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="screen" id="wallet">
+        <div class="wallet-scroll">
+          <div class="wallet-top-area">
+            <div class="wallet-bg-pattern"></div>
+            <div class="wallet-title">Ví giấy tờ</div>
+            <div class="cccd-canvas-wrap" onclick="openPasscode()">
+              <canvas id="walletCanvas"></canvas>
+            </div>
+          </div>
+          <div class="detail-btn-wrap">
+            <div class="detail-btn" onclick="openPasscode()">
+              <i class="fa-regular fa-address-card" style="font-size: 17px; color: #666"></i>Xem thông tin chi tiết
+            </div>
+          </div>
+          <div class="wallet-bottom">
+            <div class="acc-level-row">
+              <span class="acc-level-text">Tài khoản mức 2</span>
+              <i class="fa-solid fa-shield-halved" style="color: var(--red); font-size: 18px; margin-left: 6px"></i>
+            </div>
+            <p class="acc-desc-text">Tài khoản của bạn đã được định danh điện tử mức 2</p>
+            <div class="w-section-title">Tích hợp và xuất trình</div>
+            <div class="action-row">
+              <div class="action-box">
+                <div style="font-size: 38px; color: var(--red)">
+                  <i class="fa-solid fa-mobile-screen-button"></i>
+                </div>
+                <span class="action-label">Tích hợp giấy tờ</span>
+              </div>
+              <div class="action-box">
+                <div style="font-size: 38px; color: var(--red)">
+                  <i class="fa-solid fa-id-card"></i>
+                </div>
+                <span class="action-label">Xuất trình giấy tờ</span>
+              </div>
+            </div>
+            <div class="alert-info">
+              <div class="alert-dot"></div>
+              <div class="alert-msg">Bạn đang có 0 thông tin chờ xác nhận tích hợp.</div>
+            </div>
+            <div class="w-section-title">Giấy tờ</div>
+            <div class="docs-grid">
+              <div class="doc-item">
+                <div class="doc-circle">
+                  <div class="doc-circle-inner"><div class="doc-cccd"></div></div>
+                </div>
+                <span class="doc-label">Thẻ Căn cước/...</span>
+              </div>
+              <div class="doc-item">
+                <div class="doc-circle">
+                  <div class="doc-circle-inner"><div class="doc-vn30">VN-30</div></div>
+                </div>
+                <span class="doc-label">Đăng ký xe</span>
+              </div>
+              <div class="doc-item">
+                <div class="doc-circle">
+                  <div class="doc-circle-inner"><div class="doc-bhyt"></div></div>
+                </div>
+                <span class="doc-label">Thẻ BHYT</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <nav class="bottom-nav">
+          <button class="nav-btn" onclick="switchTab('home')">
+            <i class="fa-solid fa-house"></i><span>Trang chủ</span>
+          </button>
+          <button class="nav-btn active">
+            <i class="fa-solid fa-wallet"></i><span>Ví giấy tờ</span>
+          </button>
+          <div class="nav-scan-btn"><i class="fa-solid fa-qrcode"></i></div>
+          <button class="nav-btn">
+            <i class="fa-regular fa-bell"></i><span>Thông báo</span>
+          </button>
+          <button class="nav-btn">
+            <i class="fa-solid fa-gear"></i><span>Cài đặt</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="screen" id="detail">
+        <div class="detail-header">
+          <button class="back-btn" onclick="go('detail','wallet')">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <span class="detail-header-title">Căn cước điện tử</span>
+        </div>
+        <div class="detail-scroll">
+          <div class="detail-bg-pattern"></div>
+          <div class="detail-inner">
+            <div class="detail-canvas-wrap">
+              <canvas id="detailCanvas"></canvas>
+            </div>
+            <div class="info-section">
+              <div class="info-entry">
+                <span class="info-key">Nơi sinh: </span><span class="info-val" id="d-noiSinh">---</span>
+              </div>
+              <div class="info-entry">
+                <span class="info-key">Nơi đăng ký khai sinh: </span><span class="info-val" id="d-noiDKKS">---</span>
+              </div>
+              <div class="info-entry">
+                <span class="info-key">Quê quán: </span><span class="info-val" id="d-queQuan2">---</span>
+              </div>
+              <div class="info-row-split">
+                <div class="info-entry">
+                  <span class="info-key">Dân tộc: </span><span class="info-val" id="d-danToc">---</span>
+                </div>
+                <div class="info-entry">
+                  <span class="info-key">Tôn giáo: </span><span class="info-val" id="d-tonGiao">---</span>
+                </div>
+              </div>
+              <div class="info-entry">
+                <div><span class="info-key">Nơi thường trú:</span></div>
+                <div class="info-val" id="d-thuongTru2">---</div>
+              </div>
+              <div class="info-entry">
+                <div><span class="info-key">Nơi tạm trú:</span></div>
+                <div class="info-val" id="d-tamTru">---</div>
+              </div>
+              <div class="info-entry">
+                <div><span class="info-key">Nơi ở hiện tại:</span></div>
+                <div class="info-val" id="d-noiOHienTai">---</div>
+              </div>
+              <div class="info-entry">
+                <span class="info-key">Đặc điểm nhân dạng: </span><span class="info-val" id="d-dacDiem">---</span>
+              </div>
+              <div class="info-entry">
+                <span class="info-key">Ngày cấp Căn cước gần nhất: </span><span class="info-val" id="d-ngayCap">---</span>
+              </div>
+            </div>
+            <div class="update-row">
+              <span>Cập nhật lần cuối</span><span class="val" id="d-updateTime">---</span>
+            </div>
+            <div class="links-section">
+              <div class="link-row">
+                <i class="fa-solid fa-circle-right link-icon"></i><span class="link-text">Thẻ Căn cước</span>
+              </div>
+              <div class="link-row">
+                <i class="fa-solid fa-circle-right link-icon"></i><span class="link-text">Lịch sử cấp thẻ CC/CCCD/CMND</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay" id="passcodeOverlay">
+        <div class="passcode-sheet">
+          <div class="sheet-header">
+            <span class="sheet-title">Nhập passcode</span>
+            <button class="sheet-close" onclick="closePasscode()">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div class="dots-row" id="dotsRow">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="forgot-link">Quên passcode</div>
+          <div class="keypad">
+            <div class="key" onclick="kp(1)">1</div>
+            <div class="key" onclick="kp(2)">2</div>
+            <div class="key" onclick="kp(3)">3</div>
+            <div class="key" onclick="kp(4)">4</div>
+            <div class="key" onclick="kp(5)">5</div>
+            <div class="key" onclick="kp(6)">6</div>
+            <div class="key" onclick="kp(7)">7</div>
+            <div class="key" onclick="kp(8)">8</div>
+            <div class="key" onclick="kp(9)">9</div>
+            <div class="key empty"></div>
+            <div class="key" onclick="kp(0)">0</div>
+            <div class="key del" onclick="kpDel()">
+              <i class="fa-solid fa-delete-left"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const cardImg = new Image();
+      fetch("card_base64.txt")
+        .then(r => r.text())
+        .then(b64 => {
+          cardImg.src = b64.trim();
+        });
+
+      let userData = {
+        soCCCD: "",
+        hoTen: "NGUYỄN VĂN MẪN",
+        ngaySinh: "",
+        gioiTinh: "Nam",
+        quocTich: "Việt Nam",
+        queQuan: "",
+        thuongTru: "",
+        tamTru: "",
+        noiOHienTai: "",
+        noiSinh: "",
+        noiDKKS: "",
+        danToc: "Kinh",
+        tonGiao: "Không",
+        dacDiem: "",
+        ngayCap: "",
+        giaTri: "",
+        photoData: "",
+      };
+      let userPhotoImg = null;
+
+      function fmtDate(s) {
+        if (!s) return "";
+        const [y, m, d] = s.split("-");
+        return `${d}/${m}/${y}`;
+      }
+      function maskNum(s) {
+        if (!s) return "";
+        if (s.length <= 4) return s;
+        return s.slice(0, 3) + "*".repeat(s.length - 6) + s.slice(-3);
+      }
+
+      function drawCard(canvasId, masked) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const W = cardImg.width;
+        const H = cardImg.height;
+        canvas.width = W;
+        canvas.height = H;
+        ctx.drawImage(cardImg, 0, 0, W, H);
+
+        if (userPhotoImg) {
+          let frameX = 48;
+          let frameY = 200;
+          let frameW = 172;
+          let frameH = 258;
+
+          frameX -= 15;
+          frameY -= 15;
+          frameW += (15 + 5);
+          frameH += (15 + 5);
+
+          const imgW = userPhotoImg.width;
+          const imgH = userPhotoImg.height;
+
+          const scale = Math.max(frameW / imgW, frameH / imgH);
+          const newW = imgW * scale;
+          const newH = imgH * scale;
+
+          const dx = frameX - (newW - frameW) / 2;
+          const dy = frameY - (newH - frameH) / 2;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(frameX, frameY, frameW, frameH);
+          ctx.clip();
+          ctx.drawImage(userPhotoImg, dx, dy, newW, newH);
+          ctx.restore();
+        }
+
+        ctx.fillStyle = "#111";
+        ctx.textBaseline = "top";
+
+        const config = {
+          soCCCD: { x: 350, y: 225, font: "bold 28px Arial" },
+          hoTen: { x: 460, y: 275, font: "bold 25.5px Arial" },
+          ngaySinh: { x: 530, y: 323, font: "bold 21px Arial" },
+          gioiTinh: { x: 400, y: 372, font: "bold 20px Arial" },
+          quocTich: { x: 700, y: 372, font: "bold 20px Arial" },
+          queQuan: { startX: 530, x: 310, y: 410, maxW: 550, lineH: 26, font: "bold 19.5px Arial" },
+          thuongTru: { startX: 310, x: 310, y: 485, maxW: 550, lineH: 26, font: "bold 19.5px Arial" },
+          giaTri: { x: 135, y: 520, font: "bold 18px Arial" },
+        };
+
+        const num = masked ? maskNum(userData.soCCCD) : userData.soCCCD;
+        const name = masked
+          ? userData.hoTen.split(" ").map((w, i) => (i < 2 ? w : "•".repeat(w.length))).join(" ")
+          : userData.hoTen;
+
+        ctx.font = config.soCCCD.font;
+        ctx.fillText(num, config.soCCCD.x, config.soCCCD.y);
+
+        ctx.font = config.hoTen.font;
+        ctx.fillText(name, config.hoTen.x, config.hoTen.y);
+
+        ctx.font = config.ngaySinh.font;
+        ctx.fillText(fmtDate(userData.ngaySinh), config.ngaySinh.x, config.ngaySinh.y);
+
+        ctx.font = config.gioiTinh.font;
+        ctx.fillText(userData.gioiTinh, config.gioiTinh.x, config.gioiTinh.y);
+        ctx.font = config.quocTich.font;
+        ctx.fillText(userData.quocTich, config.quocTich.x, config.quocTich.y);
+
+        ctx.font = config.queQuan.font;
+        wrapText(ctx, userData.queQuan || "", config.queQuan.x, config.queQuan.y, config.queQuan.maxW, config.queQuan.lineH, config.queQuan.startX);
+
+        ctx.font = config.thuongTru.font;
+        wrapText(ctx, userData.thuongTru || "", config.thuongTru.x, config.thuongTru.y, config.thuongTru.maxW, config.thuongTru.lineH, config.thuongTru.startX);
+
+        ctx.font = config.giaTri.font;
+        ctx.fillText(fmtDate(userData.giaTri), config.giaTri.x, config.giaTri.y);
+      }
+
+      function wrapText(ctx, text, x, y, maxW, lineH, firstLineX) {
+        const words = text.split(" ");
+        let line = "";
+        let lineCount = 0;
+        let currentX = firstLineX !== undefined ? firstLineX : x;
+
+        for (let i = 0; i < words.length; i++) {
+          const test = line + (line ? " " : "") + words[i];
+          const currentMaxW = maxW - (currentX - x);
+
+          if (ctx.measureText(test).width > currentMaxW && line) {
+            ctx.fillText(line, currentX, y + lineCount * lineH);
+            line = words[i];
+            lineCount++;
+            currentX = x;
+
+            if (lineCount >= 2) {
+              ctx.fillText(line + "...", currentX, y + lineCount * lineH);
+              return;
+            }
+          } else {
+            line = test;
+          }
+        }
+        if (line) ctx.fillText(line, currentX, y + lineCount * lineH);
+      }
+
+      function renderCards() {
+        drawCard("walletCanvas", true);
+        drawCard("detailCanvas", false);
+      }
+
+      cardImg.onload = () => renderCards();
+      if (cardImg.complete) renderCards();
+
+      function tick() {
+        const n = new Date();
+        document.getElementById("clock").textContent =
+          String(n.getHours()).padStart(2, "0") + ":" + String(n.getMinutes()).padStart(2, "0");
+      }
+      setInterval(tick, 1000);
+      tick();
+
+      let current = "splash", currentTab = "home";
+
+      function go(from, to) {
+        const f = document.getElementById(from), t = document.getElementById(to);
+        const depth = { splash: 0, login: 1, setup: 1, home: 2, wallet: 2, detail: 3 };
+        const fwd = depth[to] >= depth[from];
+        if (fwd) {
+          f.classList.remove("active");
+          f.classList.add("behind");
+          t.classList.remove("slide-out-left");
+          t.classList.add("active");
+          setTimeout(() => f.classList.remove("behind"), 400);
+        } else {
+          t.classList.remove("behind", "slide-out-left");
+          t.classList.add("active");
+          f.classList.remove("active");
+          f.classList.add("slide-out-left");
+          setTimeout(() => f.classList.remove("slide-out-left"), 400);
+        }
+        const darkScreens = ["login", "setup", "wallet", "detail"];
+        if (darkScreens.includes(to)) document.getElementById("statusBar").classList.add("dark");
+        else document.getElementById("statusBar").classList.remove("dark");
+        current = to;
+      }
+
+      function switchTab(tab) {
+        if (tab === currentTab) return;
+        const f = document.getElementById(currentTab), t = document.getElementById(tab);
+        if (tab === "wallet") {
+          f.classList.remove("active");
+          f.classList.add("slide-out-left");
+          t.classList.remove("slide-out-left", "behind");
+          t.classList.add("active");
+          setTimeout(() => f.classList.remove("slide-out-left"), 400);
+          document.getElementById("statusBar").classList.add("dark");
+        } else {
+          f.classList.remove("active");
+          f.classList.add("behind");
+          t.classList.remove("behind", "slide-out-left");
+          t.classList.add("active");
+          setTimeout(() => f.classList.remove("behind"), 400);
+          document.getElementById("statusBar").classList.remove("dark");
+        }
+        currentTab = tab;
+      }
+
+      let code = "";
+      function openPasscode() {
+        code = "";
+        updateDots();
+        document.getElementById("passcodeOverlay").classList.add("open");
+      }
+      function closePasscode() {
+        document.getElementById("passcodeOverlay").classList.remove("open");
+      }
+      function updateDots() {
+        document.querySelectorAll(".dot").forEach((d, i) => d.classList.toggle("on", i < code.length));
+      }
+      function kp(n) {
+        if (code.length >= 6) return;
+        code += n;
+        updateDots();
+        if (code.length === 6) {
+          setTimeout(() => {
+            closePasscode();
+            go("wallet", "detail");
+          }, 320);
+        }
+      }
+      function kpDel() {
+        if (code.length > 0) {
+          code = code.slice(0, -1);
+          updateDots();
+        }
+      }
+      function togglePwd() {
+        const i = document.getElementById("pwdInput"), e = document.getElementById("eyeIcon");
+        if (i.type === "password") {
+          i.type = "text";
+          e.className = "fa-regular fa-eye";
+        } else {
+          i.type = "password";
+          e.className = "fa-regular fa-eye-slash";
+        }
+      }
+
+      function handlePhotoUpload(input) {
+        const f = input.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = (e) => {
+          userData.photoData = e.target.result;
+          const img = document.getElementById("photoPreviewImg");
+          img.src = e.target.result;
+          img.style.display = "block";
+          document.getElementById("photoPlaceholder").style.display = "none";
+          userPhotoImg = new Image();
+          userPhotoImg.onload = () => renderCards();
+          userPhotoImg.src = e.target.result;
+        };
+        r.readAsDataURL(f);
+      }
+
+      function saveInfo() {
+        userData.soCCCD = document.getElementById("inp-soCCCD").value.trim();
+        userData.hoTen = document.getElementById("inp-hoTen").value.trim().toUpperCase();
+        userData.ngaySinh = document.getElementById("inp-ngaySinh").value;
+        userData.gioiTinh = document.getElementById("inp-gioiTinh").value;
+        userData.quocTich = document.getElementById("inp-quocTich").value.trim() || "Việt Nam";
+        userData.queQuan = document.getElementById("inp-queQuan").value.trim();
+        userData.thuongTru = document.getElementById("inp-thuongTru").value.trim();
+        userData.tamTru = document.getElementById("inp-tamTru").value.trim();
+        userData.noiOHienTai = document.getElementById("inp-noiOHienTai").value.trim();
+        userData.noiSinh = document.getElementById("inp-noiSinh").value.trim();
+        userData.noiDKKS = document.getElementById("inp-noiDKKS").value.trim();
+        userData.danToc = document.getElementById("inp-danToc").value.trim() || "Kinh";
+        userData.tonGiao = document.getElementById("inp-tonGiao").value.trim() || "Không";
+        userData.dacDiem = document.getElementById("inp-dacDiem").value.trim();
+        userData.ngayCap = document.getElementById("inp-ngayCap").value;
+        userData.giaTri = document.getElementById("inp-giaTri").value;
+
+        document.getElementById("loginCardName").textContent = userData.hoTen || "NGUYỄN VĂN MẪN";
+        document.getElementById("loginCardId").textContent = userData.soCCCD ? maskNum(userData.soCCCD) : "04********39";
+        document.getElementById("homeName").textContent = userData.hoTen || "NGUYỄN VĂN MẪN";
+        if (userData.photoData) document.getElementById("homeAvatar").src = userData.photoData;
+
+        document.getElementById("d-noiSinh").textContent = userData.noiSinh || "---";
+        document.getElementById("d-noiDKKS").textContent = userData.noiDKKS || "---";
+        document.getElementById("d-queQuan2").textContent = userData.queQuan || "---";
+        document.getElementById("d-danToc").textContent = userData.danToc || "---";
+        document.getElementById("d-tonGiao").textContent = userData.tonGiao || "---";
+        document.getElementById("d-thuongTru2").textContent = userData.thuongTru || "---";
+        document.getElementById("d-tamTru").textContent = userData.tamTru || "---";
+        document.getElementById("d-noiOHienTai").textContent = userData.noiOHienTai || "---";
+        document.getElementById("d-dacDiem").textContent = userData.dacDiem || "---";
+        document.getElementById("d-ngayCap").textContent = fmtDate(userData.ngayCap) || "---";
+
+        const now = new Date();
+        document.getElementById("d-updateTime").textContent =
+          `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")} ${String(now.getDate()).padStart(2, "0")}-${String(now.getMonth() + 1).padStart(2, "0")}-${now.getFullYear()}`;
+
+        renderCards();
+        go("setup", "login");
+      }
+    </script>
+  </body>
+</html>
